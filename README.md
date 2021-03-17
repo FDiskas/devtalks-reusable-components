@@ -1,12 +1,23 @@
 # Next Project from scratch with reusable components
 
-## Create empty project
+## Requirements
+
+> use google how to install or register
+
+- NodeJs
+- NPM + YARN
+- npmjs.com account
+- github.com account
+
+## Setup boilerplate
+
+### Create empty project
 
 1. `npx create-next-app --example with-typescript nextjs-blog`
 1. ` cd nextjs-blog`
 1. `code .`
 
-## Setup environment
+### Setup environment
 
 1. `npm i -g mrm`
 1. `mrm editorconfig -i`
@@ -34,11 +45,14 @@
 
 ```
 
-## Configure settings
+### Configure settings
 
+1. Edit `.gitignore` file and replace `/node_modules` with `node_modules/` and `/build` with `build/`
+   > This will allow us to ignore such folders also deeper within nested folders
 1. Edit `.eslintrc.json` and replace `"prettier/@typescript-eslint",` with `"plugin:prettier/recommended"`
 1. Add new rule to `eslintrc.json`
    ```json
+   "react/prop-types": "off", // Types are handled by typescript
    "jsx-a11y/anchor-is-valid": [
      "error",
      {
@@ -68,11 +82,11 @@
    ]
    ```
 
-## IDE Config
+### IDE Configs
 
-1. Restart your IDE
+> Restart your IDEA before starting
 
-### vscode users
+#### vscode IDEA
 
 1. Create file `.vscode/extensions.json`
    ```json
@@ -105,4 +119,165 @@
        "markdown"
      ]
    }
+   ```
+
+#### IntelliJ IDEA
+
+1. In the **Settings/Preferences** dialog <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd>, go to **Languages and Frameworks | JavaScript | Prettier**.
+
+1. Choose the Node.js interpreter to use. This can be a local Node.js interpreter or a [Node.js on Windows Subsystem for Linux](https://www.jetbrains.com/help/idea/developing-node-js-applications.html#ws_node_wsl).
+
+1. From the Prettier package list, select the prettier installation to use.
+
+1. IntelliJ IDEA locates the prettier package itself and the field is filled in automatically.
+
+1. To run Prettier automatically against specific files, open the **Settings/Preferences** dialog <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>S</kbd>, go to **Languages and Frameworks | JavaScript | Prettier**, and use the **On code reformatting** and **On save** checkboxes to specify the actions that will trigger Prettier.
+
+## Setup workspace
+
+To reuse our components in other projects we need make them independent from current project
+
+1. Create `package.json` within `src/components` directory
+   ```
+   yarn init -y
+   ```
+1. Open generated `package.json` and change package name to scoped name. Use your npmjs.com account username
+
+   ```json
+   "name": "@fdiskas/devtalks-ui",
+   ```
+
+1. Add `react` and `react-dom` as peer dependency. Thous packages should be installed in user side
+
+   ```json
+   "peerDependencies": {
+     "react": ">=16.8.0",
+     "react-dom": ">=16.8.0"
+   },
+   ```
+
+1. Create a workspace by adding to the root `package.json`. [More info about yarn workspaces](https://classic.yarnpkg.com/en/docs/workspaces/)
+
+   ```json
+   "private": true,
+   "workspaces": [
+     "src/components"
+   ]
+   ```
+
+1. Create demo script at `src/components/package.json` add
+
+   ```json
+   "scripts": {
+     "build": "echo 'yeee'"
+   },
+   ```
+
+1. Test it - should print to console `yeee`
+   ```
+   yarn workspace @fdiskas/devtalks-ui build
+   ```
+
+## Prepare component to be build independent from main project
+
+1. Install rollup bundler and dependencies
+   ```
+   yarn workspace @fdiskas/devtalks-ui add -D \
+     rollup \
+     @rollup/plugin-commonjs \
+     rollup-plugin-typescript2 \
+     rollup-plugin-postcss \
+     rollup-plugin-copy \
+     @rollup/plugin-image \
+     rollup-plugin-node-resolve \
+     rollup-plugin-peer-deps-external
+   ```
+1. Create config file in `src/components/rollup.config.js`
+
+   ```js
+   import commonjs from '@rollup/plugin-commonjs';
+   import typescript from 'rollup-plugin-typescript2';
+   import postcss from 'rollup-plugin-postcss';
+   import copy from 'rollup-plugin-copy';
+   import image from '@rollup/plugin-image';
+   import resolve from 'rollup-plugin-node-resolve';
+   import peerDepsExternal from 'rollup-plugin-peer-deps-external';
+
+   let override = {
+     compilerOptions: {
+       jsx: 'react',
+       declaration: true,
+       module: 'ESNext',
+       declarationDir: './build'
+     }
+   };
+
+   export default {
+     input: './index.ts',
+     output: [
+       {
+         dir: 'build',
+         format: 'cjs',
+         sourcemap: false,
+         exports: 'named'
+       },
+       {
+         dir: 'build/esm',
+         format: 'esm',
+         sourcemap: false,
+         exports: 'named'
+       }
+     ],
+     preserveModules: true,
+     external: ['react', 'react-dom'],
+     plugins: [
+       peerDepsExternal(),
+       resolve({ browser: true }),
+       commonjs({
+         include: /node_modules/,
+         exclude: ['node_modules/process-es6/**'],
+         namedExports: {
+           react: ['Children', 'PropTypes', 'createElement', 'elementType'],
+           'prop-types': ['elementType'],
+           'react-dom': ['render', 'findDOMNode'],
+           'react-is': ['ForwardRef', 'Memo']
+         },
+         requireReturnsDefault: 'preferred',
+         esmExternals: true
+       }),
+       image(),
+       typescript({
+         tsconfig: '../../tsconfig.json',
+         useTsconfigDeclarationDir: true,
+         tsconfigOverride: override
+       }),
+       postcss({
+         modules: true,
+         inject: false,
+         extract: true
+       }),
+       copy({
+         targets: [
+           {
+             src: 'src/components/_variables.scss',
+             dest: 'build',
+             rename: 'variables.scss'
+           },
+           {
+             src: 'package.json',
+             dest: 'build',
+             rename: 'package.json'
+           }
+         ]
+       })
+     ]
+   };
+   ```
+
+1. Refactor `src/components` according to eslint rules.
+1. Refactor components as be as named export
+1. eslint will complain that preferred way is use default export - to fix that edit `.eslintrc.json` and add new rule: [more info here](https://basarat.gitbooks.io/typescript/docs/tips/defaultIsBad.html)
+
+   ```json
+   "import/prefer-default-export": "off",
    ```
