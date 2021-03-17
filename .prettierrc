@@ -1,0 +1,23 @@
+{
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "printWidth": 80,
+        "useTabs": false,
+        "trailingComma": "none",
+        "arrowParens": "avoid",
+        "proseWrap": "never"
+      }
+    },
+    {
+      "files": "*.{json,babelrc,eslintrc,remarkrc,prettierrc}",
+      "options": {
+        "useTabs": false
+      }
+    }
+  ]
+}
