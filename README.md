@@ -1,5 +1,7 @@
 # Next Project from scratch with reusable components
 
+> Repository: https://github.com/FDiskas/devtalks-reusable-components
+
 ## Requirements
 
 > use google how to install or register
