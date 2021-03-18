@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "typings": "typings/index.d.ts",
   "scripts": {
-    "build": "rollup -c"
+    "prebuild": "rimraf build typings",
+    "build": "rollup -c",
+    "postbuild": "copyfiles -f 'typings/components/**/*' build/typings && rimraf typings"
   },
   "peerDependencies": {
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0"
+    "@types/react": "^16.8.6 || ^17.0.0",
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.1.0",

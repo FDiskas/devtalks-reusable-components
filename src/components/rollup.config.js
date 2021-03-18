@@ -6,7 +6,7 @@ import image from '@rollup/plugin-image';
 import resolve from 'rollup-plugin-node-resolve';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 
-let override = { compilerOptions: { jsx: 'react', declaration: true, module: 'ESNext', declarationDir: './build' } };
+let override = { compilerOptions: { jsx: 'react', declaration: true, module: 'ESNext', declarationDir: 'src/components/typings' } };
 
 export default {
   input: './index.ts',
@@ -32,17 +32,6 @@ export default {
     commonjs({
       include: /node_modules/,
       exclude: ['node_modules/process-es6/**'],
-      namedExports: {
-        react: [
-          'Children',
-          'PropTypes',
-          'createElement',
-          'elementType',
-        ],
-        'prop-types': ['elementType'],
-        'react-dom': ['render', 'findDOMNode'],
-        'react-is': ['ForwardRef', 'Memo'],
-      },
       requireReturnsDefault: 'preferred',
       esmExternals: true,
     }),
@@ -61,14 +50,12 @@ export default {
     copy({
       targets: [
         {
-          src: 'src/styles/_variables.scss',
-          dest: 'build',
-          rename: 'variables.scss',
-        },
-        {
           src: 'package.json',
           dest: 'build',
-          rename: 'package.json',
+        },
+        {
+          src: 'typings/components',
+          dest: 'build/typings',
         },
       ],
     }),

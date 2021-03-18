@@ -34,7 +34,9 @@
      eslint-plugin-react \
      eslint-plugin-react-hooks \
      @typescript-eslint/eslint-plugin \
-     typescript-plugin-css-modules
+     typescript-plugin-css-modules \
+     rimraf \
+     copyfiles
    ```
 1. Create folder `src` and move the following `components`, `pages`, `interfaces`, `utils` folders with all contents to `src`
 
@@ -153,8 +155,14 @@ To reuse our components in other projects we need make them independent from cur
 
    ```json
    "peerDependencies": {
-     "react": ">=16.8.0",
-     "react-dom": ">=16.8.0"
+      "@types/react": "^16.8.6 || ^17.0.0",
+      "react": "^16.8.0 || ^17.0.0",
+      "react-dom": "^16.8.0 || ^17.0.0"
+   },
+   "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    }
    },
    ```
 
@@ -210,7 +218,7 @@ To reuse our components in other projects we need make them independent from cur
        jsx: 'react',
        declaration: true,
        module: 'ESNext',
-       declarationDir: './build'
+       declarationDir: 'src/components/typings'
      }
    };
 
@@ -238,12 +246,6 @@ To reuse our components in other projects we need make them independent from cur
        commonjs({
          include: /node_modules/,
          exclude: ['node_modules/process-es6/**'],
-         namedExports: {
-           react: ['Children', 'PropTypes', 'createElement', 'elementType'],
-           'prop-types': ['elementType'],
-           'react-dom': ['render', 'findDOMNode'],
-           'react-is': ['ForwardRef', 'Memo']
-         },
          requireReturnsDefault: 'preferred',
          esmExternals: true
        }),
@@ -256,19 +258,18 @@ To reuse our components in other projects we need make them independent from cur
        postcss({
          modules: true,
          inject: false,
-         extract: true
+         extract: true,
+         config: { path: 'src/components/postcss.config.js' }
        }),
        copy({
          targets: [
            {
-             src: 'src/components/_variables.scss',
-             dest: 'build',
-             rename: 'variables.scss'
+             src: 'package.json',
+             dest: 'build'
            },
            {
-             src: 'package.json',
-             dest: 'build',
-             rename: 'package.json'
+             src: 'typings/components',
+             dest: 'build/typings'
            }
          ]
        })
@@ -283,3 +284,99 @@ To reuse our components in other projects we need make them independent from cur
    ```json
    "import/prefer-default-export": "off",
    ```
+
+1. Create build scripts at `src/components/package.json`
+
+   ```json
+     "scripts": {
+       "prebuild": "rimraf build typings",
+       "build": "rollup -c",
+       "postbuild": "copyfiles -f 'typings/components/**/*' build/typings && rimraf typings"
+     },
+   ```
+
+1. Test the build scripts - run from the root of your project
+
+   ```
+   yarn workspace @fdiskas/devtalks-ui build
+   ```
+
+1. Check contents of `src/components/build`
+   ```
+   npm pack
+   ```
+
+## Setup CD
+
+We will use github to publish our component on git TAG
+
+1. Create new file `.github/workflows/npm-publish.yml`
+
+   ```yml
+   name: Publish Package
+
+   on:
+     create:
+       tags:
+         - v*
+
+   jobs:
+     build:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+         - uses: actions/setup-node@v2
+           with:
+             node-version: 14.x
+         - run: yarn install --frozen-lockfile
+
+     publish-npm:
+       needs: build
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+         - uses: actions/setup-node@v2
+           with:
+             node-version: 14.x
+             registry-url: https://registry.npmjs.org
+             always-auth: true
+         - run: yarn install --frozen-lockfile
+         - run: yarn workspace @fdiskas/devtalks-ui build
+         - run: yarn workspace @fdiskas/devtalks-ui version --new-version "${GITHUB_REF:11}" --no-git-tag-version
+         - run: yarn workspace @fdiskas/devtalks-ui publish --access public
+           env:
+             NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+     publish-gpr:
+       needs: build
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+         - uses: actions/setup-node@v2
+           with:
+             node-version: 14.x
+             registry-url: https://npm.pkg.github.com
+         - run: yarn install --frozen-lockfile
+         - run: yarn workspace @fdiskas/devtalks-ui version --new-version "${GITHUB_REF:11}" --no-git-tag-version
+         - run: yarn workspace @fdiskas/devtalks-ui publish --access public
+           env:
+             NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+   ```
+
+1. Login to npm
+
+   ```
+   npm login
+   ```
+
+1. Open file on your home directory `~/.npmrc` and copy value of:
+
+   ```
+   //registry.npmjs.org/:_authToken=********
+   ```
+
+1. Go to github repository settings `settings/secrets/actions/new`
+1. Create New secret Name: `NPM_TOKEN` value your auth token
+1. Go to github repository and create new release `releases/new`
+1. Add your first tag `v1.0.1` and additional release info
+1. Click <kbd>Publish release</kbd> and check how CI is running `actions/`
