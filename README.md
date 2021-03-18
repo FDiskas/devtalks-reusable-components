@@ -297,9 +297,13 @@ To reuse our components in other projects we need make them independent from cur
     "main": "build/index.js",
     "module": "build/esm/index.js",
     "typings": "build/typings/index.d.ts",
-    "files": [
-      "build/**/*"
-    ],
+   ```
+
+1. Create `src/components/.npmignore` file
+
+   ```
+   *.ts
+   *.tsx
    ```
 
 1. Test the build scripts - run from the root of your project
