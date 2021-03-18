@@ -50,10 +50,6 @@ export default {
     copy({
       targets: [
         {
-          src: 'package.json',
-          dest: 'build',
-        },
-        {
           src: 'typings/components',
           dest: 'build/typings',
         },

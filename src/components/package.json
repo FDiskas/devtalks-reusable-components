@@ -2,11 +2,12 @@
   "name": "@fdiskas/devtalks-ui",
   "version": "1.0.0",
   "license": "MIT",
-  "main": "index.js",
-  "module": "esm/index.js",
-  "typings": "typings/index.d.ts",
+  "main": "build/index.js",
+  "module": "build/esm/index.js",
+  "typings": "build/typings/index.d.ts",
   "files": [
-    "build/**/*"
+    "build/**/*",
+    "../../README.md"
   ],
   "scripts": {
     "prebuild": "rimraf build typings",

@@ -264,10 +264,6 @@ To reuse our components in other projects we need make them independent from cur
        copy({
          targets: [
            {
-             src: 'package.json',
-             dest: 'build'
-           },
-           {
              src: 'typings/components',
              dest: 'build/typings'
            }
@@ -298,9 +294,9 @@ To reuse our components in other projects we need make them independent from cur
 1. Specify where main files are
 
    ```json
-    "main": "index.js",
-    "module": "esm/index.js",
-    "typings": "typings/index.d.ts",
+    "main": "build/index.js",
+    "module": "build/esm/index.js",
+    "typings": "build/typings/index.d.ts",
     "files": [
       "build/**/*"
     ],
@@ -340,6 +336,8 @@ We will use github to publish our component on git TAG
            with:
              node-version: 14.x
          - run: yarn install --frozen-lockfile
+         - run: yarn build
+         - run: yarn workspace @fdiskas/devtalks-ui build
 
      publish-npm:
        needs: build
