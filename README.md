@@ -295,6 +295,17 @@ To reuse our components in other projects we need make them independent from cur
      },
    ```
 
+1. Specify where main files are
+
+   ```json
+    "main": "index.js",
+    "module": "esm/index.js",
+    "typings": "typings/index.d.ts",
+    "files": [
+      "build/**/*"
+    ],
+   ```
+
 1. Test the build scripts - run from the root of your project
 
    ```
@@ -357,6 +368,7 @@ We will use github to publish our component on git TAG
              node-version: 14.x
              registry-url: https://npm.pkg.github.com
          - run: yarn install --frozen-lockfile
+         - run: yarn workspace @fdiskas/devtalks-ui build
          - run: yarn workspace @fdiskas/devtalks-ui version --new-version "${GITHUB_REF:11}" --no-git-tag-version
          - run: yarn workspace @fdiskas/devtalks-ui publish --access public
            env:

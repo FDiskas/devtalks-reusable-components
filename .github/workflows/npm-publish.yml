@@ -42,6 +42,7 @@ jobs:
           node-version: 14.x
           registry-url: https://npm.pkg.github.com
       - run: yarn install --frozen-lockfile
+      - run: yarn workspace @fdiskas/devtalks-ui build
       - run: yarn workspace @fdiskas/devtalks-ui version --new-version "${GITHUB_REF:11}" --no-git-tag-version
       - run: yarn workspace @fdiskas/devtalks-ui publish --access public
         env:
